@@ -1,5 +1,7 @@
 package com.maximus.wechatchelsea.util;
 
+import com.maximus.wechatchelsea.model.Article;
+import com.maximus.wechatchelsea.model.NewsMessage;
 import com.maximus.wechatchelsea.model.TextMessage;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.core.util.QuickWriter;
@@ -95,29 +97,42 @@ public class MessageUtil {
      */
     public static final String EVENT_TYPE_SCAN = "SCAN";
 
+    //文本消息转化为xml
     public static String textMessageToXml(TextMessage textMessage) {
         xstream.alias("xml", textMessage.getClass());
         return xstream.toXML(textMessage);
     }
 
+    /**
+     * @Description: 图文消息对象转换成xml
+     * @param  newsMessage
+     * @date   2016-12-01
+     * @return  xml
+     */
+    public String newsMessageToXml(NewsMessage newsMessage) {
+        xstream.alias("xml", newsMessage.getClass());
+        xstream.alias("item", new Article().getClass());
+        return xstream.toXML(newsMessage);
+    }
+
     private static XStream xstream = new XStream(new XppDriver() {
         public HierarchicalStreamWriter createWriter(Writer out) {
-            return new PrettyPrintWriter(out) {
-                boolean cdata = true;
-                @SuppressWarnings("rawtypes")
-                public void startNode(String name, Class clazz) {
-                    super.startNode(name, clazz);
+        return new PrettyPrintWriter(out) {
+            boolean cdata = true;
+            @SuppressWarnings("rawtypes")
+            public void startNode(String name, Class clazz) {
+                super.startNode(name, clazz);
+            }
+            protected void writeText(QuickWriter writer, String text) {
+                if (cdata) {
+                    writer.write("<![CDATA[");
+                    writer.write(text);
+                    writer.write("]]>");
+                } else {
+                    writer.write(text);
                 }
-                protected void writeText(QuickWriter writer, String text) {
-                    if (cdata) {
-                        writer.write("<![CDATA[");
-                        writer.write(text);
-                        writer.write("]]>");
-                    } else {
-                        writer.write(text);
-                    }
-                }
-            };
+            }
+        };
         }
     });
 

@@ -1,29 +1,37 @@
 package com.maximus.wechatchelsea.scheduledTask;
 
 import com.maximus.wechatchelsea.constants.WeiXinConstants;
+import com.maximus.wechatchelsea.mapper.WeChatAccessTokenMapper;
 import com.maximus.wechatchelsea.model.AccessToken;
 import com.maximus.wechatchelsea.util.HttpUtil;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
+import org.apache.ibatis.annotations.Param;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
+
 /**
  * 定时获取accessToken
  */
 @Component
-public class AccessTokenTask {
-    private static final Logger logger = LoggerFactory.getLogger(AccessTokenTask.class);
+public class AccessTokenThread extends Thread {
+    @Resource
+    private WeChatAccessTokenMapper accessTokenMapper;
+
+    private static final Logger logger = LoggerFactory.getLogger(AccessTokenThread.class);
 
     private static String ACCESS_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET";
 
     //每隔一段时间获取accessToken并存储
-    @Scheduled(cron = "*/300 * * * * ?")
+    @Scheduled(cron = "*/60 * * * * ?")
     public void saveAccessToken() {
         String accessToken = getAccessToken(WeiXinConstants.APPID, WeiXinConstants.APPSECRET);
         logger.info(accessToken);
+        accessTokenMapper.saveAccessToken(accessToken);
     }
 
     public static String getAccessToken(String appId, String appSecret) {
